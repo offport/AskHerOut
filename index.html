@@ -39,21 +39,30 @@
 
   #fx{position:fixed;inset:0;z-index:5;pointer-events:none}
 
-  .stage{position:relative;z-index:10;min-height:100dvh;display:grid;place-items:center;padding:24px}
-  .screen{display:none;width:100%;max-width:560px;animation:pop .55s cubic-bezier(.2,.9,.25,1.2)}
+  /* flex + margin:auto centres safely: content taller than the viewport is never
+     clipped at the top the way `place-items:center` clips it. */
+  .stage{
+    position:relative;z-index:10;height:100dvh;display:flex;
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding:clamp(8px,1.8vh,24px) 14px;
+  }
+  .screen{display:none;width:100%;max-width:560px;margin:auto;animation:pop .55s cubic-bezier(.2,.9,.25,1.2)}
   .screen.on{display:block}
   @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
 
   .card{
     background:var(--card); border:1px solid var(--stroke); border-radius:var(--r);
-    padding:34px 30px; box-shadow:var(--shadow);
+    padding:clamp(16px,2.6vh,34px) clamp(16px,4vw,30px); box-shadow:var(--shadow);
     backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%);
     text-align:center;
   }
-  .kicker{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--pink-soft);opacity:.85;margin:0 0 14px}
-  h1{margin:0 0 12px;font-size:clamp(30px,7vw,46px);line-height:1.1;letter-spacing:-.02em}
+  .kicker{font-size:clamp(11px,1.5vh,13px);letter-spacing:.22em;text-transform:uppercase;
+          color:var(--pink-soft);opacity:.85;margin:0 0 clamp(8px,1.3vh,14px)}
+  /* type shrinks with viewport WIDTH and HEIGHT, so short landscape phones fit too */
+  h1{margin:0 0 clamp(8px,1.3vh,12px);font-size:clamp(26px,min(7vw,6vh),46px);line-height:1.1;letter-spacing:-.02em}
   h1 .grad{background:linear-gradient(100deg,var(--pink-soft),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .sub{margin:0 auto 28px;max-width:38ch;color:var(--muted);font-size:16px;line-height:1.6}
+  .sub{margin:0 auto clamp(14px,2.4vh,28px);max-width:38ch;color:var(--muted);font-size:16px;line-height:1.6}
 
   .btn{
     border:0;cursor:pointer;font:inherit;font-weight:700;color:#2b0716;
@@ -70,7 +79,7 @@
   }
   .btn.ghost:hover{background:rgba(255,255,255,.12)}
 
-  .choices{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:64px}
+  .choices{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:clamp(52px,8vh,64px)}
   #yesBtn{transform-origin:center}
   #noBtn{
     position:relative;
@@ -78,48 +87,61 @@
     z-index:40;
   }
   #noBtn.loose{position:fixed;margin:0}
-  #tease{margin-top:16px;height:22px;font-size:14px;color:var(--pink-soft);opacity:0;transition:opacity .3s}
+  #tease{margin-top:16px;min-height:22px;font-size:14px;color:var(--pink-soft);opacity:0;transition:opacity .3s}
   #tease.show{opacity:.95}
 
-  .calhead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
-  .calhead b{font-size:18px}
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin:2px 0 clamp(8px,1.3vh,14px)}
+  .calhead b{font-size:clamp(15px,2.3vh,18px)}
   .nav{border:1px solid var(--stroke);background:rgba(255,255,255,.06);color:var(--ink);
-       width:38px;height:38px;border-radius:12px;cursor:pointer;font-size:17px;line-height:1;transition:background .15s}
+       width:clamp(32px,4.6vh,38px);height:clamp(32px,4.6vh,38px);
+       border-radius:12px;cursor:pointer;font-size:17px;line-height:1;transition:background .15s}
   .nav:hover{background:rgba(255,255,255,.14)}
   .nav:disabled{opacity:.28;cursor:not-allowed}
-  .dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-  .dow span{font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding-bottom:6px}
+  .dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(4px,.7vh,6px)}
+  .dow span{font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding-bottom:clamp(2px,.5vh,6px)}
+  /* height keyed to viewport height (not aspect-ratio) so 6 rows always fit */
   .day{
-    aspect-ratio:1;border:1px solid transparent;border-radius:12px;background:rgba(255,255,255,.05);
-    color:var(--ink);font:inherit;font-size:15px;cursor:pointer;display:grid;place-items:center;
+    height:clamp(26px,4.6vh,44px);
+    border:1px solid transparent;border-radius:10px;background:rgba(255,255,255,.05);
+    color:var(--ink);font:inherit;font-size:clamp(13px,2vh,15px);cursor:pointer;display:grid;place-items:center;
     transition:background .15s,transform .12s;position:relative;
   }
   .day:hover:not(:disabled){background:rgba(255,255,255,.14);transform:translateY(-1px)}
   .day:disabled{opacity:.22;cursor:not-allowed;background:transparent}
   .day.blank{background:transparent;border:0;cursor:default}
-  .day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--pink-soft)}
+  .day.today::after{content:"";position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background:var(--pink-soft)}
   .day.sel{background:linear-gradient(135deg,var(--pink),#ff3f77);color:#2b0716;font-weight:800;
            box-shadow:0 8px 20px rgba(255,63,119,.35)}
 
   .label{display:block;text-align:left;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-         color:var(--muted);margin:24px 0 10px}
-  .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+         color:var(--muted);margin:clamp(10px,1.8vh,24px) 0 clamp(6px,1vh,10px)}
+  .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:clamp(6px,1vh,8px)}
+  /* narrow phones: pin to 4 columns and let the custom time span two cells, so the
+     six presets + the picker always land in exactly two rows */
+  @media (max-width:520px){
+    .slots{grid-template-columns:repeat(4,1fr)}
+    input#customTime{grid-column:span 2}
+  }
   .slot{border:1px solid var(--stroke);background:rgba(255,255,255,.05);color:var(--ink);
-        padding:11px 8px;border-radius:12px;font:inherit;font-size:14px;cursor:pointer;transition:background .15s,transform .12s}
+        padding:clamp(7px,1.2vh,11px) 8px;border-radius:12px;font:inherit;font-size:14px;
+        cursor:pointer;transition:background .15s,transform .12s}
   .slot:hover{background:rgba(255,255,255,.13);transform:translateY(-1px)}
   .slot.sel{background:linear-gradient(135deg,var(--pink),#ff3f77);color:#2b0716;font-weight:800;border-color:transparent}
   input[type=time],textarea{
     width:100%;font:inherit;color:var(--ink);background:rgba(255,255,255,.05);
-    border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;outline:none;
+    border:1px solid var(--stroke);border-radius:12px;padding:clamp(8px,1.2vh,12px) 14px;outline:none;
   }
-  input[type=time]{color-scheme:dark}
-  textarea{resize:vertical;min-height:74px;line-height:1.5}
+  /* the custom time sits in the slot grid, so it costs no extra vertical space */
+  input#customTime{color-scheme:dark;text-align:center;font-size:14px;
+                   padding:clamp(6px,1.1vh,10px) 6px;border-radius:12px;cursor:pointer}
+  textarea{resize:vertical;min-height:clamp(38px,5.6vh,74px);line-height:1.5}
   input:focus,textarea:focus{border-color:var(--pink)}
-  .rowend{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .rowend{margin-top:clamp(12px,2vh,26px);display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
   .receipt{
     text-align:left;background:rgba(0,0,0,.28);border:1px dashed var(--stroke);
-    border-radius:16px;padding:18px 20px;margin:6px 0 20px;font-size:15px;line-height:1.85;
+    border-radius:16px;padding:clamp(12px,1.9vh,18px) 20px;margin:6px 0 clamp(12px,2vh,20px);
+    font-size:clamp(14px,2vh,15px);line-height:1.7;
   }
   .receipt .k{color:var(--muted);display:inline-block;min-width:82px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
   .receipt .v{font-weight:700}
@@ -127,8 +149,44 @@
   .status.ok{color:#8ce6b0}
   .status.warn{color:var(--gold)}
   a.dl{color:var(--pink-soft)}
-  .big{font-size:clamp(44px,12vw,86px);line-height:1;margin:0 0 10px}
-  @media (max-width:480px){ .card{padding:26px 20px} .choices{gap:14px} }
+  .big{font-size:clamp(36px,min(12vw,9vh),86px);line-height:1;margin:0 0 clamp(4px,1vh,10px)}
+  #tease{margin-top:clamp(8px,1.6vh,16px)}
+  @media (max-width:480px){ .choices{gap:14px} }
+
+  /* ---- short viewports: shed every non-essential pixel so the calendar screen
+          (the tallest one) fits a phone without scrolling ---- */
+  @media (max-height:700px){
+    .stage{padding:8px 10px}
+    .card{padding:12px 14px}
+    #s-cal .kicker{display:none}
+    #s-cal h1{font-size:20px;margin-bottom:6px}
+    .label{margin:9px 0 5px;font-size:11px}
+    textarea{min-height:32px}
+    .rowend{margin-top:10px}
+    .btn{padding:13px 26px;font-size:16px}
+  }
+  @media (max-height:640px){
+    .dow,.grid{gap:3px}
+    .day{height:24px;font-size:12px;border-radius:8px}
+    .slot{padding:6px 6px;font-size:13px}
+    .slots{gap:5px}
+    textarea{min-height:28px}
+    .calhead{margin-bottom:6px}
+  }
+  /* short + wide (a phone held sideways): calendar left, everything else right */
+  @media (max-height:560px) and (min-width:600px){
+    .screen{max-width:840px}
+    .calwrap{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+    .optside .label:first-child{margin-top:0}
+    .optside .rowend{margin-top:12px}
+    #s-cal h1{margin-bottom:8px}
+    .day{height:clamp(20px,5.2vh,26px)}
+    .btn{padding:11px 24px}
+    .big{font-size:30px;margin-bottom:2px}
+    #s-done .big{display:none}
+    .receipt{line-height:1.5;padding:10px 16px;margin-bottom:10px}
+    #s-done .sub{margin-bottom:6px}
+  }
 </style>
 </head>
 <body>
@@ -167,23 +225,30 @@
       <p class="kicker">step 2 of 2</p>
       <h1 style="font-size:clamp(24px,5.5vw,32px)">Pick your day &amp; time</h1>
 
-      <div class="calhead">
-        <button class="nav" id="prevM" aria-label="Previous month">&lsaquo;</button>
-        <b id="monthLbl"></b>
-        <button class="nav" id="nextM" aria-label="Next month">&rsaquo;</button>
-      </div>
-      <div class="dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
-      <div class="grid" id="days"></div>
+      <div class="calwrap">
+        <div class="calside">
+          <div class="calhead">
+            <button class="nav" id="prevM" aria-label="Previous month">&lsaquo;</button>
+            <b id="monthLbl"></b>
+            <button class="nav" id="nextM" aria-label="Next month">&rsaquo;</button>
+          </div>
+          <div class="dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+          <div class="grid" id="days"></div>
+        </div>
 
-      <label class="label">What time works?</label>
-      <div class="slots" id="slots"></div>
-      <div style="margin-top:8px"><input type="time" id="customTime" aria-label="Custom time"></div>
+        <div class="optside">
+          <label class="label">What time works?</label>
+          <div class="slots" id="slots">
+            <input type="time" id="customTime" class="slot" aria-label="Or pick your own time">
+          </div>
 
-      <label class="label">Anything you'd like to add? (optional)</label>
-      <textarea id="note" placeholder="dinner? coffee? somewhere with good dessert..."></textarea>
+          <label class="label">Anything you'd like to add? (optional)</label>
+          <textarea id="note" rows="2" placeholder="dinner? coffee? somewhere with good dessert..."></textarea>
 
-      <div class="rowend">
-        <button class="btn" id="confirm" disabled style="opacity:.45;cursor:not-allowed">Lock it in &#128274;</button>
+          <div class="rowend">
+            <button class="btn" id="confirm" disabled style="opacity:.45;cursor:not-allowed">Lock it in &#128274;</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -378,6 +443,8 @@ const fmtTime = t => {
   const [h,m] = t.split(':').map(Number);
   return (((h + 11) % 12) + 1) + ':' + pad2(m) + ' ' + (h < 12 ? 'AM' : 'PM');
 };
+// compact label for the buttons: "7 PM" rather than "7:00 PM", so four fit per row
+const fmtSlot = t => fmtTime(t).replace(':00', '');
 
 const today = new Date(); today.setHours(0,0,0,0);
 let view = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -411,21 +478,23 @@ function renderCal(){
 $('#prevM').addEventListener('click', () => { view.setMonth(view.getMonth()-1); renderCal(); });
 $('#nextM').addEventListener('click', () => { view.setMonth(view.getMonth()+1); renderCal(); });
 
-const slotBox = $('#slots');
+const slotBox = $('#slots'), timeInput = $('#customTime');
+const slotBtns = () => slotBox.querySelectorAll('button');
 TIMES.forEach(t => {
   const b = document.createElement('button');
-  b.className = 'slot'; b.type = 'button'; b.textContent = fmtTime(t);
+  b.className = 'slot'; b.type = 'button'; b.textContent = fmtSlot(t);
   b.addEventListener('click', () => {
-    chosenTime = t; $('#customTime').value = '';
-    [...slotBox.children].forEach(c => c.classList.toggle('sel', c === b));
+    chosenTime = t; timeInput.value = '';
+    slotBtns().forEach(c => c.classList.toggle('sel', c === b));
     sync();
   });
   slotBox.appendChild(b);
 });
-$('#customTime').addEventListener('input', e => {
+slotBox.appendChild(timeInput);   // keep the custom time last, inside the same grid
+timeInput.addEventListener('input', e => {
   if (!e.target.value) return;
   chosenTime = e.target.value;
-  [...slotBox.children].forEach(c => c.classList.remove('sel'));
+  slotBtns().forEach(c => c.classList.remove('sel'));
   sync();
 });
 
