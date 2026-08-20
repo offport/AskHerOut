@@ -276,6 +276,8 @@
 const CONFIG = {
   monthsAhead: 4,            // how far ahead she can book
   saveEndpoint: '/save',     // local server (server.py) that writes responses.txt
+  remoteEndpoint: '',        // Cloudflare Worker URL -> appends to responses.txt in the
+                             // repo when the page is hosted. See worker/README.md.
   fileName: 'date-details.txt',
   sendTo: ''                 // optional: your email -> adds a "send it to him" link
 };
@@ -552,9 +554,12 @@ function textFor(p){
   ].join('\n');
 }
 
-// GitHub Pages is static: there is no server there to write a file, so don't
-// even try. Locally (server.py) the POST works and appends to responses.txt.
-const hasServer = location.protocol.startsWith('http') && !/\.github\.io$/i.test(location.hostname);
+// Where a submitted answer should go:
+//   - served by server.py       -> POST /save, appended to responses.txt locally
+//   - hosted + Worker configured -> POST to the Worker, appended to responses.txt in the repo
+//   - anything else              -> hand the visitor the .txt file
+const isStaticHost = !location.protocol.startsWith('http') || /\.github\.io$/i.test(location.hostname);
+const endpoint = isStaticHost ? CONFIG.remoteEndpoint : CONFIG.saveEndpoint;
 
 function downloadTxt(p, s){
   const blob = new Blob([textFor(p)], {type:'text/plain'});
@@ -573,10 +578,10 @@ function downloadTxt(p, s){
 
 async function saveIt(p){
   const s = $('#status');
-  if (!hasServer){ downloadTxt(p, s); return; }
+  if (!endpoint){ downloadTxt(p, s); return; }
   s.className = 'status'; s.textContent = 'Saving...';
   try{
-    const r = await fetch(CONFIG.saveEndpoint, {
+    const r = await fetch(endpoint, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(p)

@@ -1,0 +1,11 @@
+name = "askherout-save"
+main = "src/worker.js"
+compatibility_date = "2026-08-01"
+
+[vars]
+REPO = "offport/AskHerOut"
+FILE = "responses.txt"
+ALLOWED_ORIGIN = "https://offport.github.io"
+
+# GITHUB_TOKEN is NOT here on purpose - it is a secret:
+#   npx wrangler secret put GITHUB_TOKEN

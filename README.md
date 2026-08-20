@@ -14,11 +14,16 @@ A single-page invitation to ask someone out.
 | How you run it | What happens on "Lock it in" |
 | --- | --- |
 | `python server.py` (local) | Appended to `responses.txt` in this folder (plus `responses.json`) |
-| GitHub Pages (static) | Downloaded to her device as `date-details.txt` |
+| GitHub Pages + Worker relay | Appended to `responses.txt` **in this repo** (see `worker/`) |
+| GitHub Pages alone | Downloaded to her device as `date-details.txt` |
 
 GitHub Pages serves static files only — there is no backend there to write into the
-repo, so the hosted version hands over the text file instead. To collect answers into
-`responses.txt` in the repo, run it locally:
+repo. To have the hosted page commit answers to `responses.txt`, deploy the small
+Cloudflare Worker in [`worker/`](worker/README.md) and set `remoteEndpoint` in the
+`CONFIG` block; the write token lives in the Worker, never in this public page. Without
+it the hosted page just hands over the text file.
+
+To collect answers locally instead:
 
 ```bash
 python server.py          # http://localhost:8777
@@ -49,7 +54,8 @@ Everything lives in `index.html`. Near the top of the `<script>` block:
 ```js
 const CONFIG = {
   monthsAhead: 4,                  // how far ahead she can book
-  saveEndpoint: '/save',
+  saveEndpoint: '/save',           // local server
+  remoteEndpoint: '',              // Cloudflare Worker URL, for the hosted page
   fileName: 'date-details.txt',
   sendTo: ''                       // add your email -> adds a "send it to him" link
                                    // on the final screen (mailto, pre-filled)
