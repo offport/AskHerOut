@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>A Question For You</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg1:#1a0a1f; --bg2:#2d0d33; --bg3:#0d0618;
+    --pink:#ff5c8a; --pink-soft:#ff9ec4; --gold:#ffd479;
+    --ink:#fff4f8; --muted:#c9a8bd;
+    --card:rgba(255,255,255,.055);
+    --stroke:rgba(255,255,255,.14);
+    --shadow:0 30px 80px rgba(0,0,0,.55);
+    --r:22px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0; overflow:hidden;
+    font-family:ui-rounded,"SF Pro Rounded",-apple-system,"Segoe UI",Nunito,system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 800px at 15% 10%, #47154d 0%, transparent 60%),
+      radial-gradient(900px 700px at 85% 85%, #5a1030 0%, transparent 60%),
+      linear-gradient(160deg,var(--bg1),var(--bg2) 45%,var(--bg3));
+    background-attachment:fixed;
+  }
+
+  /* floating hearts backdrop */
+  #hearts{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .heart{position:absolute;bottom:-10vh;font-size:22px;opacity:.35;animation:rise linear forwards}
+  @keyframes rise{
+    0%{transform:translateY(0) rotate(0deg) scale(.7);opacity:0}
+    10%{opacity:.45}
+    100%{transform:translateY(-118vh) rotate(360deg) scale(1.15);opacity:0}
+  }
+
+  #fx{position:fixed;inset:0;z-index:5;pointer-events:none}
+
+  .stage{position:relative;z-index:10;min-height:100dvh;display:grid;place-items:center;padding:24px}
+  .screen{display:none;width:100%;max-width:560px;animation:pop .55s cubic-bezier(.2,.9,.25,1.2)}
+  .screen.on{display:block}
+  @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+
+  .card{
+    background:var(--card); border:1px solid var(--stroke); border-radius:var(--r);
+    padding:34px 30px; box-shadow:var(--shadow);
+    backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%);
+    text-align:center;
+  }
+  .kicker{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--pink-soft);opacity:.85;margin:0 0 14px}
+  h1{margin:0 0 12px;font-size:clamp(30px,7vw,46px);line-height:1.1;letter-spacing:-.02em}
+  h1 .grad{background:linear-gradient(100deg,var(--pink-soft),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:0 auto 28px;max-width:38ch;color:var(--muted);font-size:16px;line-height:1.6}
+
+  .btn{
+    border:0;cursor:pointer;font:inherit;font-weight:700;color:#2b0716;
+    padding:16px 30px;border-radius:999px;font-size:18px;
+    background:linear-gradient(135deg,#ffd6e4,var(--pink) 55%,#ff3f77);
+    box-shadow:0 12px 30px rgba(255,63,119,.38), inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .18s cubic-bezier(.2,.9,.25,1.4), box-shadow .18s, filter .18s;
+    will-change:transform;
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn.ghost{
+    background:rgba(255,255,255,.07);color:var(--ink);
+    border:1px solid var(--stroke);box-shadow:none;font-weight:600;
+  }
+  .btn.ghost:hover{background:rgba(255,255,255,.12)}
+
+  .choices{display:flex;gap:18px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:64px}
+  #yesBtn{transform-origin:center}
+  #noBtn{
+    position:relative;
+    transition:left .16s cubic-bezier(.2,.9,.3,1.3), top .16s cubic-bezier(.2,.9,.3,1.3), transform .16s;
+    z-index:40;
+  }
+  #noBtn.loose{position:fixed;margin:0}
+  #tease{margin-top:16px;height:22px;font-size:14px;color:var(--pink-soft);opacity:0;transition:opacity .3s}
+  #tease.show{opacity:.95}
+
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+  .calhead b{font-size:18px}
+  .nav{border:1px solid var(--stroke);background:rgba(255,255,255,.06);color:var(--ink);
+       width:38px;height:38px;border-radius:12px;cursor:pointer;font-size:17px;line-height:1;transition:background .15s}
+  .nav:hover{background:rgba(255,255,255,.14)}
+  .nav:disabled{opacity:.28;cursor:not-allowed}
+  .dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .dow span{font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding-bottom:6px}
+  .day{
+    aspect-ratio:1;border:1px solid transparent;border-radius:12px;background:rgba(255,255,255,.05);
+    color:var(--ink);font:inherit;font-size:15px;cursor:pointer;display:grid;place-items:center;
+    transition:background .15s,transform .12s;position:relative;
+  }
+  .day:hover:not(:disabled){background:rgba(255,255,255,.14);transform:translateY(-1px)}
+  .day:disabled{opacity:.22;cursor:not-allowed;background:transparent}
+  .day.blank{background:transparent;border:0;cursor:default}
+  .day.today::after{content:"";position:absolute;bottom:6px;width:4px;height:4px;border-radius:50%;background:var(--pink-soft)}
+  .day.sel{background:linear-gradient(135deg,var(--pink),#ff3f77);color:#2b0716;font-weight:800;
+           box-shadow:0 8px 20px rgba(255,63,119,.35)}
+
+  .label{display:block;text-align:left;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+         color:var(--muted);margin:24px 0 10px}
+  .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+  .slot{border:1px solid var(--stroke);background:rgba(255,255,255,.05);color:var(--ink);
+        padding:11px 8px;border-radius:12px;font:inherit;font-size:14px;cursor:pointer;transition:background .15s,transform .12s}
+  .slot:hover{background:rgba(255,255,255,.13);transform:translateY(-1px)}
+  .slot.sel{background:linear-gradient(135deg,var(--pink),#ff3f77);color:#2b0716;font-weight:800;border-color:transparent}
+  input[type=time],textarea{
+    width:100%;font:inherit;color:var(--ink);background:rgba(255,255,255,.05);
+    border:1px solid var(--stroke);border-radius:12px;padding:12px 14px;outline:none;
+  }
+  input[type=time]{color-scheme:dark}
+  textarea{resize:vertical;min-height:74px;line-height:1.5}
+  input:focus,textarea:focus{border-color:var(--pink)}
+  .rowend{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  .receipt{
+    text-align:left;background:rgba(0,0,0,.28);border:1px dashed var(--stroke);
+    border-radius:16px;padding:18px 20px;margin:6px 0 20px;font-size:15px;line-height:1.85;
+  }
+  .receipt .k{color:var(--muted);display:inline-block;min-width:82px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .receipt .v{font-weight:700}
+  .status{font-size:13px;color:var(--muted);margin-top:6px;min-height:20px}
+  .status.ok{color:#8ce6b0}
+  .status.warn{color:var(--gold)}
+  a.dl{color:var(--pink-soft)}
+  .big{font-size:clamp(44px,12vw,86px);line-height:1;margin:0 0 10px}
+  @media (max-width:480px){ .card{padding:26px 20px} .choices{gap:14px} }
+</style>
+</head>
+<body>
+
+<div id="hearts" aria-hidden="true"></div>
+<canvas id="fx"></canvas>
+
+<main class="stage">
+
+  <!-- 1. THE ASK -->
+  <section class="screen on" id="s-ask">
+    <div class="card">
+      <p class="kicker">a very important question</p>
+      <h1>Will you go on a <span class="grad">date</span> with me?</h1>
+      <div class="choices" style="margin-top:30px">
+        <button class="btn" id="yesBtn">Yes &#128150;</button>
+        <button class="btn ghost" id="noBtn" tabindex="-1">No</button>
+      </div>
+      <div id="tease"></div>
+    </div>
+  </section>
+
+  <!-- 2. CELEBRATION -->
+  <section class="screen" id="s-yay">
+    <div class="card">
+      <p class="big">&#127881;</p>
+      <h1>She said <span class="grad">YES!</span></h1>
+      <p class="sub">Best decision you've made all week. Now the important part &mdash; when are you free?</p>
+      <button class="btn" id="toCal">Pick a day &#128197;</button>
+    </div>
+  </section>
+
+  <!-- 3. CALENDAR -->
+  <section class="screen" id="s-cal">
+    <div class="card">
+      <p class="kicker">step 2 of 2</p>
+      <h1 style="font-size:clamp(24px,5.5vw,32px)">Pick your day &amp; time</h1>
+
+      <div class="calhead">
+        <button class="nav" id="prevM" aria-label="Previous month">&lsaquo;</button>
+        <b id="monthLbl"></b>
+        <button class="nav" id="nextM" aria-label="Next month">&rsaquo;</button>
+      </div>
+      <div class="dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+      <div class="grid" id="days"></div>
+
+      <label class="label">What time works?</label>
+      <div class="slots" id="slots"></div>
+      <div style="margin-top:8px"><input type="time" id="customTime" aria-label="Custom time"></div>
+
+      <label class="label">Anything you'd like to add? (optional)</label>
+      <textarea id="note" placeholder="dinner? coffee? somewhere with good dessert..."></textarea>
+
+      <div class="rowend">
+        <button class="btn" id="confirm" disabled style="opacity:.45;cursor:not-allowed">Lock it in &#128274;</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. DONE -->
+  <section class="screen" id="s-done">
+    <div class="card">
+      <p class="big">&#128140;</p>
+      <h1>It's a <span class="grad">date</span>.</h1>
+      <div class="receipt" id="receipt"></div>
+      <p class="sub" style="margin-bottom:8px">I'll be counting down. <span id="countdown"></span></p>
+      <p class="status" id="status"></p>
+      <div class="rowend">
+        <button class="btn ghost" id="again">Change the plan</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* =====================================================================
+   AskHerOut - single file, zero dependencies
+   ===================================================================== */
+const CONFIG = {
+  monthsAhead: 4,            // how far ahead she can book
+  saveEndpoint: '/save',     // local server (server.py) that writes responses.txt
+  fileName: 'date-details.txt',
+  sendTo: ''                 // optional: your email -> adds a "send it to him" link
+};
+
+const $ = s => document.querySelector(s);
+const screens = [...document.querySelectorAll('.screen')];
+const show = id => screens.forEach(s => s.classList.toggle('on', s.id === id));
+
+/* ---------------- floating hearts ---------------- */
+(function hearts(){
+  const box = $('#hearts'), glyphs = ['\u{1F497}','\u{1F495}','\u{1F496}','\u{1F338}','✨','\u{1F498}'];
+  setInterval(() => {
+    if (document.hidden) return;
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = glyphs[Math.random()*glyphs.length|0];
+    h.style.left = Math.random()*100 + 'vw';
+    h.style.fontSize = (14 + Math.random()*24) + 'px';
+    h.style.animationDuration = (9 + Math.random()*8) + 's';
+    box.appendChild(h);
+    setTimeout(() => h.remove(), 18000);
+  }, 650);
+})();
+
+/* ---------------- particle engine: fireworks + confetti ---------------- */
+const fx = $('#fx'), ctx = fx.getContext('2d');
+let P = [], raf = null;
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+function sizeFx(){ fx.width = innerWidth*DPR; fx.height = innerHeight*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', sizeFx); sizeFx();
+
+const PALETTE = ['#ff5c8a','#ffd479','#8be9fd','#b6ff8a','#ff9ec4','#c39bff','#ffffff'];
+const pick = a => a[Math.random()*a.length|0];
+
+function burst(x, y, count = 90, spread = 5.4){
+  const hue = pick(PALETTE);
+  for (let i = 0; i < count; i++){
+    const a = Math.random()*Math.PI*2, s = Math.random()*spread + .6;
+    P.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+             life:1, decay:.008+Math.random()*.014, g:.045,
+             c: Math.random() < .25 ? pick(PALETTE) : hue,
+             r: 1.4+Math.random()*2.2, kind:'spark' });
+  }
+}
+function confettiFall(n = 130){
+  for (let i = 0; i < n; i++){
+    P.push({ x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*.6,
+             vx:(Math.random()-.5)*1.6, vy:1.4+Math.random()*2.6,
+             life:1, decay:.0032, g:.012, c:pick(PALETTE),
+             r:3+Math.random()*4, rot:Math.random()*Math.PI, vr:(Math.random()-.5)*.24, kind:'confetti' });
+  }
+}
+function rocket(){
+  const x = innerWidth*(.15+Math.random()*.7), y = innerHeight*(.15+Math.random()*.35);
+  burst(x, y, 70 + (Math.random()*60|0), 4.5 + Math.random()*2.5);
+}
+function loop(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  for (let i = P.length-1; i >= 0; i--){
+    const p = P[i];
+    p.vy += p.g; p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+    if (p.kind === 'confetti'){ p.vx *= .995; p.rot += p.vr; }
+    else { p.vx *= .985; p.vy *= .985; }
+    if (p.life <= 0 || p.y > innerHeight + 60){ P.splice(i,1); continue; }
+    ctx.globalAlpha = Math.max(p.life, 0);
+    ctx.fillStyle = p.c;
+    if (p.kind === 'confetti'){
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillRect(-p.r, -p.r*.55, p.r*2, p.r*1.1); ctx.restore();
+    } else {
+      ctx.shadowBlur = 12; ctx.shadowColor = p.c;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  ctx.globalAlpha = 1;
+  raf = P.length ? requestAnimationFrame(loop) : null;
+}
+const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+
+let showTimer = null;
+function celebrate(seconds = 7){
+  confettiFall(); burst(innerWidth/2, innerHeight*.42, 150, 7); kick();
+  clearInterval(showTimer);
+  showTimer = setInterval(rocket, 420);
+  setTimeout(() => clearInterval(showTimer), seconds*1000);
+}
+
+/* ---------------- the runaway "No" button ---------------- */
+const noBtn = $('#noBtn'), yesBtn = $('#yesBtn'), tease = $('#tease');
+const TAUNTS = [
+  'nice try \u{1F60C}',
+  'huh. it moved.',
+  'that button is shy',
+  'you cannot catch it. nobody can.',
+  'the No is purely decorative',
+  'still no? try the pink one \u{1F495}',
+  'button says: absolutely not',
+  'physics has opinions'
+];
+let dodges = 0;
+
+function looseNo(){
+  if (noBtn.classList.contains('loose')) return;
+  const r = noBtn.getBoundingClientRect();
+  noBtn.style.width = r.width + 'px';
+  noBtn.style.height = r.height + 'px';
+  noBtn.classList.add('loose');
+  noBtn.style.left = r.left + 'px';
+  noBtn.style.top = r.top + 'px';
+}
+function dodge(){
+  looseNo();
+  const r = noBtn.getBoundingClientRect(), pad = 12;
+  const maxX = Math.max(innerWidth - r.width - pad, pad + 1);
+  const maxY = Math.max(innerHeight - r.height - pad, pad + 1);
+  const y = yesBtn.getBoundingClientRect();
+  let nx, ny, tries = 0;
+  do {
+    nx = pad + Math.random()*(maxX - pad);
+    ny = pad + Math.random()*(maxY - pad);
+    tries++;
+  } while (tries < 40 && (
+      Math.hypot(nx - r.left, ny - r.top) < 150 ||                    // must actually move somewhere
+      (nx < y.right + 24 && nx + r.width  > y.left - 24 &&            // never cover the Yes button
+       ny < y.bottom + 24 && ny + r.height > y.top  - 24)
+  ));
+  noBtn.style.left = nx + 'px';
+  noBtn.style.top  = ny + 'px';
+  noBtn.style.transform = 'rotate(' + ((Math.random()*24 - 12)|0) + 'deg)';
+
+  dodges++;
+  tease.textContent = TAUNTS[Math.min(dodges, TAUNTS.length) - 1];
+  tease.classList.add('show');
+  yesBtn.style.transform = 'scale(' + Math.min(1 + dodges*.055, 1.75) + ')';   // Yes gets more tempting
+  if (dodges > 4) noBtn.style.opacity = Math.max(1 - (dodges-4)*.08, .35);
+}
+
+// proximity dodge: it leaves before the cursor ever arrives
+addEventListener('pointermove', e => {
+  if (!$('#s-ask').classList.contains('on')) return;
+  const r = noBtn.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  if (Math.hypot(e.clientX - cx, e.clientY - cy) < r.width*.9 + 60) dodge();
+}, {passive:true});
+
+// belt and braces: touch, hover, focus, even a direct click never lands
+['mouseenter','mouseover','touchstart','pointerdown','focus'].forEach(ev =>
+  noBtn.addEventListener(ev, e => { e.preventDefault(); dodge(); }, {passive:false}));
+noBtn.addEventListener('click', e => { e.preventDefault(); dodge(); });
+
+/* ---------------- yes ---------------- */
+yesBtn.addEventListener('click', () => {
+  const r = yesBtn.getBoundingClientRect();
+  burst(r.left + r.width/2, r.top + r.height/2, 120, 6); kick();
+  show('s-yay'); celebrate(8);
+});
+$('#toCal').addEventListener('click', () => { show('s-cal'); renderCal(); });
+
+/* ---------------- calendar ---------------- */
+const MON  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TIMES = ['11:00','13:00','15:00','17:00','19:00','20:30'];
+const pad2 = n => String(n).padStart(2,'0');
+const fmtTime = t => {
+  const [h,m] = t.split(':').map(Number);
+  return (((h + 11) % 12) + 1) + ':' + pad2(m) + ' ' + (h < 12 ? 'AM' : 'PM');
+};
+
+const today = new Date(); today.setHours(0,0,0,0);
+let view = new Date(today.getFullYear(), today.getMonth(), 1);
+const minM = new Date(today.getFullYear(), today.getMonth(), 1);
+const maxM = new Date(today.getFullYear(), today.getMonth() + CONFIG.monthsAhead, 1);
+let chosenDate = null, chosenTime = null;
+
+function renderCal(){
+  $('#monthLbl').textContent = MON[view.getMonth()] + ' ' + view.getFullYear();
+  $('#prevM').disabled = view <= minM;
+  $('#nextM').disabled = view >= maxM;
+
+  const first = new Date(view.getFullYear(), view.getMonth(), 1).getDay();
+  const total = new Date(view.getFullYear(), view.getMonth()+1, 0).getDate();
+  const g = $('#days'); g.innerHTML = '';
+
+  for (let i = 0; i < first; i++){
+    const b = document.createElement('div'); b.className = 'day blank'; g.appendChild(b);
+  }
+  for (let d = 1; d <= total; d++){
+    const date = new Date(view.getFullYear(), view.getMonth(), d);
+    const b = document.createElement('button');
+    b.className = 'day'; b.type = 'button'; b.textContent = d;
+    if (date < today) b.disabled = true;
+    if (+date === +today) b.classList.add('today');
+    if (chosenDate && +date === +chosenDate) b.classList.add('sel');
+    b.addEventListener('click', () => { chosenDate = date; renderCal(); sync(); });
+    g.appendChild(b);
+  }
+}
+$('#prevM').addEventListener('click', () => { view.setMonth(view.getMonth()-1); renderCal(); });
+$('#nextM').addEventListener('click', () => { view.setMonth(view.getMonth()+1); renderCal(); });
+
+const slotBox = $('#slots');
+TIMES.forEach(t => {
+  const b = document.createElement('button');
+  b.className = 'slot'; b.type = 'button'; b.textContent = fmtTime(t);
+  b.addEventListener('click', () => {
+    chosenTime = t; $('#customTime').value = '';
+    [...slotBox.children].forEach(c => c.classList.toggle('sel', c === b));
+    sync();
+  });
+  slotBox.appendChild(b);
+});
+$('#customTime').addEventListener('input', e => {
+  if (!e.target.value) return;
+  chosenTime = e.target.value;
+  [...slotBox.children].forEach(c => c.classList.remove('sel'));
+  sync();
+});
+
+function sync(){
+  const ok = !!(chosenDate && chosenTime), c = $('#confirm');
+  c.disabled = !ok;
+  c.style.opacity = ok ? 1 : .45;
+  c.style.cursor = ok ? 'pointer' : 'not-allowed';
+}
+
+/* ---------------- confirm + save ---------------- */
+const esc = s => s.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+$('#confirm').addEventListener('click', async () => {
+  const d = chosenDate, t = chosenTime;
+  const iso = d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+  const pretty = DAYS[d.getDay()] + ', ' + MON[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  const payload = {
+    answer: 'YES',
+    date: iso,
+    day: DAYS[d.getDay()],
+    time: t,
+    time_pretty: fmtTime(t),
+    pretty: pretty + ' at ' + fmtTime(t),
+    note: $('#note').value.trim(),
+    dodges_before_yes: dodges,
+    submitted_at: new Date().toISOString(),
+    tz: (Intl.DateTimeFormat().resolvedOptions().timeZone || '')
+  };
+
+  $('#receipt').innerHTML =
+    '<div><span class="k">Answer</span> <span class="v">Yes \u{1F496}</span></div>' +
+    '<div><span class="k">Date</span> <span class="v">' + pretty + '</span></div>' +
+    '<div><span class="k">Time</span> <span class="v">' + fmtTime(t) + '</span></div>' +
+    (payload.note ? '<div><span class="k">Note</span> <span class="v">' + esc(payload.note) + '</span></div>' : '') +
+    '<div><span class="k">No-clicks</span> <span class="v">' + dodges + ' failed attempts \u{1F604}</span></div>';
+
+  show('s-done'); celebrate(9); startCountdown(d, t);
+  await saveIt(payload);
+});
+
+function textFor(p){
+  return [
+    '========================================',
+    '            SHE SAID YES',
+    '========================================',
+    'Answer      : ' + p.answer,
+    'Date        : ' + p.pretty,
+    'ISO         : ' + p.date + 'T' + p.time,
+    'Timezone    : ' + p.tz,
+    'Note        : ' + (p.note || '(none)'),
+    '"No" dodges : ' + p.dodges_before_yes,
+    'Submitted   : ' + p.submitted_at,
+    ''
+  ].join('\n');
+}
+
+// GitHub Pages is static: there is no server there to write a file, so don't
+// even try. Locally (server.py) the POST works and appends to responses.txt.
+const hasServer = location.protocol.startsWith('http') && !/\.github\.io$/i.test(location.hostname);
+
+function downloadTxt(p, s){
+  const blob = new Blob([textFor(p)], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = CONFIG.fileName; a.click();
+  s.className = 'status warn';
+  s.innerHTML = 'Saved as a text file &mdash; <a class="dl" href="' + url +
+                '" download="' + CONFIG.fileName + '">download again</a>' +
+                (CONFIG.sendTo
+                  ? ' &nbsp;·&nbsp; <a class="dl" href="mailto:' + CONFIG.sendTo +
+                    '?subject=' + encodeURIComponent('It is a date! ' + p.pretty) +
+                    '&body=' + encodeURIComponent(textFor(p)) + '">send it to him</a>'
+                  : '');
+}
+
+async function saveIt(p){
+  const s = $('#status');
+  if (!hasServer){ downloadTxt(p, s); return; }
+  s.className = 'status'; s.textContent = 'Saving...';
+  try{
+    const r = await fetch(CONFIG.saveEndpoint, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(p)
+    });
+    if (!r.ok) throw new Error('status ' + r.status);
+    const j = await r.json().catch(() => ({}));
+    s.className = 'status ok';
+    s.textContent = '✓ Saved to ' + (j.file || 'responses.txt');
+  } catch (err){
+    downloadTxt(p, s);   // no server running -> hand over the txt file directly
+  }
+}
+
+/* ---------------- countdown ---------------- */
+let cdTimer = null;
+function startCountdown(d, t){
+  const [h,m] = t.split(':').map(Number);
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0);
+  clearInterval(cdTimer);
+  const tick = () => {
+    let ms = target - new Date();
+    const el = $('#countdown');
+    if (ms <= 0){ el.textContent = 'It is time! \u{1F388}'; clearInterval(cdTimer); return; }
+    const dd = Math.floor(ms/86400000); ms %= 86400000;
+    const hh = Math.floor(ms/3600000);  ms %= 3600000;
+    const mm = Math.floor(ms/60000);
+    const ss = Math.floor(ms % 60000 / 1000);
+    el.textContent = dd + 'd ' + pad2(hh) + 'h ' + pad2(mm) + 'm ' + pad2(ss) + 's to go.';
+  };
+  tick(); cdTimer = setInterval(tick, 1000);
+}
+
+$('#again').addEventListener('click', () => { show('s-cal'); renderCal(); });
+
+/* extra fireworks anywhere you click on the happy screens */
+addEventListener('click', e => {
+  if ($('#s-yay').classList.contains('on') || $('#s-done').classList.contains('on')){
+    burst(e.clientX, e.clientY, 45, 4.5); kick();
+  }
+});
+</script>
+</body>
+</html>
