@@ -1,12 +1,1 @@
-============================================
-             SHE SAID YES
-============================================
-Answer      : YES
-Date        : Thursday, August 20, 2026 at 8:30 PM
-ISO         : 2026-08-20T20:30
-Timezone    : America/Los_Angeles
-Note        : asd
-"No" dodges : 1
-Submitted   : 2026-08-21T00:28:10.501Z
-Received    : 2026-08-21T00:28:05.380Z
 
