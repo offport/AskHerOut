@@ -5,15 +5,26 @@
  * answer here instead; this Worker holds the GitHub token (as a secret, never in
  * the page) and appends the answer to responses.txt in the repo.
  *
- * Secrets / vars (see wrangler.toml + README):
- *   GITHUB_TOKEN   secret  fine-grained PAT, Contents: Read and write, this repo only
- *   REPO           var     "offport/AskHerOut"
- *   FILE           var     "responses.txt"
- *   ALLOWED_ORIGIN var     "https://offport.github.io"
+ * Configuration:
+ *   GITHUB_TOKEN   secret  REQUIRED. Fine-grained PAT, Contents: Read and write,
+ *                          this repo only. Never lives in this file.
+ *   REPO           var     optional, defaults below
+ *   FILE           var     optional, defaults below
+ *   ALLOWED_ORIGIN var     optional, defaults below
  */
 
 const MAX_BODY = 4096;          // an answer is a few hundred bytes; anything else is junk
 const MAX_RETRIES = 4;          // GitHub returns 409 if the file moved under us
+
+// Defaults so this file can be pasted straight into the Cloudflare dashboard
+// editor: the only thing that MUST be configured there is the GITHUB_TOKEN
+// secret. wrangler.toml still overrides these when deploying from the CLI.
+const DEFAULTS = {
+  REPO: 'offport/AskHerOut',
+  FILE: 'responses.txt',
+  ALLOWED_ORIGIN: 'https://offport.github.io',
+};
+const cfg = (env, key) => env[key] || DEFAULTS[key];
 
 const json = (obj, status, extra = {}) =>
   new Response(JSON.stringify(obj), {
@@ -22,7 +33,7 @@ const json = (obj, status, extra = {}) =>
   });
 
 function corsHeaders(env, request) {
-  const allowed = env.ALLOWED_ORIGIN || '*';
+  const allowed = cfg(env, 'ALLOWED_ORIGIN');
   const origin = request.headers.get('Origin') || '';
   return {
     'Access-Control-Allow-Origin': allowed === '*' ? '*' : (origin === allowed ? origin : allowed),
@@ -69,7 +80,7 @@ function entry(p, meta) {
 }
 
 async function gh(env, path, init = {}) {
-  return fetch(`https://api.github.com/repos/${env.REPO}/${path}`, {
+  return fetch(`https://api.github.com/repos/${cfg(env, 'REPO')}/${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
@@ -83,7 +94,7 @@ async function gh(env, path, init = {}) {
 
 /** Read → append → write, retrying when someone else commits in between. */
 async function appendToFile(env, block) {
-  const file = env.FILE || 'responses.txt';
+  const file = cfg(env, 'FILE');
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const get = await gh(env, `contents/${encodeURIComponent(file)}`);
@@ -136,13 +147,13 @@ export default {
       return json({ error: 'missing date/time' }, 400, cors);
     }
 
-    if (!env.GITHUB_TOKEN || !env.REPO) return json({ error: 'worker not configured' }, 500, cors);
+    if (!env.GITHUB_TOKEN) return json({ error: 'worker has no GITHUB_TOKEN secret' }, 500, cors);
 
     const result = await appendToFile(env, entry(payload, { now: new Date().toISOString() }));
     if (!result.ok) {
       console.log('github write failed', result.status, result.detail);
       return json({ error: 'could not save' }, 502, cors);
     }
-    return json({ ok: true, file: env.FILE || 'responses.txt' }, 200, cors);
+    return json({ ok: true, file: cfg(env, 'FILE') }, 200, cors);
   },
 };

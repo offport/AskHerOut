@@ -20,9 +20,22 @@ is public.
 | Repository access | **Only select repositories** -> `AskHerOut` |
 | Permissions -> Repository -> **Contents** | **Read and write** |
 
-Generate it and copy the `github_pat_...` string. It is shown once.
+Generate it and copy the `github_pat_...` string. It is shown once. Treat it like a
+password: it never goes in this repo, in the page, or in a chat window.
 
-**2. Deploy the Worker**
+**2a. Deploy from the Cloudflare dashboard (no tooling required)**
+
+1. <https://dash.cloudflare.com> -> Workers & Pages -> **Create** -> **Start from Hello World**
+2. Name it `askherout-save`, click **Deploy**, then **Edit code**
+3. Replace everything in the editor with the contents of `src/worker.js`, **Deploy** again
+4. Worker -> **Settings** -> **Variables and Secrets** -> add a secret:
+   name `GITHUB_TOKEN`, value the token from step 1 -> **Deploy**
+
+`REPO`, `FILE` and `ALLOWED_ORIGIN` have defaults baked into the script, so the token
+is the only thing you must set. Override them as plaintext variables if any of them
+change.
+
+**2b. Or deploy from the command line** (needs Node.js installed)
 
 ```bash
 cd worker
@@ -31,7 +44,7 @@ npx wrangler secret put GITHUB_TOKEN  # paste the token when prompted
 npx wrangler deploy
 ```
 
-`deploy` prints the URL, e.g. `https://askherout-save.<your-subdomain>.workers.dev`.
+Either way you end up with a URL like `https://askherout-save.<subdomain>.workers.dev`.
 
 **3. Point the page at it**
 
@@ -46,9 +59,7 @@ Commit and push. Pages redeploys in a minute or two.
 **4. Check it**
 
 ```bash
-curl -X POST https://askherout-save.<your-subdomain>.workers.dev/save \
-  -H 'Content-Type: application/json' \
-  -d '{"answer":"YES","date":"2026-09-01","time":"19:00","pretty":"Tuesday, September 1, 2026 at 7:00 PM","tz":"Asia/Riyadh","note":"test","dodges_before_yes":3,"submitted_at":"2026-08-20T10:00:00Z"}'
+curl -X POST https://askherout-save.<your-subdomain>.workers.dev/save   -H 'Content-Type: application/json'   -d '{"answer":"YES","date":"2026-09-01","time":"19:00","pretty":"Tuesday, September 1, 2026 at 7:00 PM","tz":"Asia/Riyadh","note":"test","dodges_before_yes":3,"submitted_at":"2026-08-20T10:00:00Z"}'
 ```
 
 Expect `{"ok":true,"file":"responses.txt"}`, then a new commit titled "She picked a date"
