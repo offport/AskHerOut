@@ -83,7 +83,9 @@ async function gh(env, path, init = {}) {
   return fetch(`https://api.github.com/repos/${cfg(env, 'REPO')}/${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      // trim(): a token pasted through a shell can arrive with a BOM or trailing
+      // newline, which makes the header non-ASCII and GitHub answer 401.
+      Authorization: `Bearer ${String(env.GITHUB_TOKEN).trim()}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
       'User-Agent': 'askherout-worker',

@@ -276,7 +276,8 @@
 const CONFIG = {
   monthsAhead: 4,            // how far ahead she can book
   saveEndpoint: '/save',     // local server (server.py) that writes responses.txt
-  remoteEndpoint: '',        // Cloudflare Worker URL -> appends to responses.txt in the
+  remoteEndpoint: 'https://askherout-save.offport.workers.dev/save',
+                             // Cloudflare Worker -> appends to responses.txt in the
                              // repo when the page is hosted. See worker/README.md.
   fileName: 'date-details.txt',
   sendTo: ''                 // optional: your email -> adds a "send it to him" link
