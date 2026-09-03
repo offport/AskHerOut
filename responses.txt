@@ -1,0 +1,12 @@
+============================================
+             SHE SAID YES
+============================================
+Answer      : YES
+Date        : Sunday, September 6, 2026 at 11:00 AM
+ISO         : 2026-09-06T11:00
+Timezone    : America/Toronto
+Note        : Coffee?
+"No" dodges : 0
+Submitted   : 2026-09-03T11:13:31.542Z
+Received    : 2026-09-03T11:13:32.013Z
+
