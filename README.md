@@ -9,6 +9,12 @@ A single-page invitation to ask someone out.
 
 **Live:** https://offport.github.io/AskHerOut/
 
+## Screenshots
+
+The page as she will see it — captured in a private browsing window, nothing answered yet.
+
+<p><img src="screenshots/desktop.png" width="640" alt="Desktop: the question with the Yes and No buttons"> <img src="screenshots/phone.png" width="222" alt="Phone: the same card at phone width"></p>
+
 ## Where the answer goes
 
 | How you run it | What happens on "Lock it in" |
